@@ -1,0 +1,30 @@
+{
+    "manifest_version": 3,
+    "name": "NBC OTS PII Fetcher",
+    "version": "1.0",
+    "description": "Launches all NBC/Telemundo personal data export pages, clicks all export data links, and re-runs downloads based on download count",
+    "permissions": ["downloads","tabs"],
+    "action": {
+        "default_title": "NBC OTS PII Fetcher",
+        "default_popup": "popup/export-popup.html",
+        "browser_style": true,
+        "default_icon": {
+          "16": "popup/download-icon.png",
+          "32": "popup/download-icon.png"
+        }
+      },
+      "content_scripts": [
+        {
+          "matches": ["https://*/wp-admin/my-sites.php"],
+          "js": ["./content_scripts/launcher.js"]
+        },
+        {
+          "matches": ["https://*/wp-admin/export-personal-data.php"],
+          "js": ["./content_scripts/export-personal-data.js"]
+        },
+        {
+          "matches": ["https://*/*/wp-admin/export-personal-data.php"],
+          "js": ["./content_scripts/export-personal-data.js"]
+        }
+      ]
+}
