@@ -54,10 +54,10 @@ function deleteUnconfirmed(){
          });
       });
    });
-}
+};
 function retryDownloads(){
    retries++;
-   liveDisplay.innerHTML = `<p>Re-downloading ${retries} times</p><img src="spinner.gif" id="loading">`;
+   liveDisplay.innerHTML = `<p>Re-downloading ${retries} time(s)</p><img src="spinner.gif" id="loading">`;
    console.log("Sending retry command to site")
    chrome.tabs.sendMessage(siteId,{command: "retry"},function(siteResponse){
       console.log(`Site response: ${siteResponse.status}`);
@@ -69,6 +69,7 @@ function closeExportPage(){
          chrome.tabs.sendMessage(launcherId,{status: "tab closed"},function(response){
             console.log(`Launcher page response: ${response.status}`);
             if(response.status === "complete"){
+               console.log(`Fetching complete`)
                liveDisplay.innerHTML = `<p>Fetching complete</p>`
                if(response.incomplete.length > 0){
                   window.prompt(`Some sites didn't finish. Please note the incomplete sites below (CTRL+C to copy):`,response.incomplete.join("\n"));
@@ -101,7 +102,7 @@ window.alert("Please ensure the following before fetching exports:\n\n- You are 
 //Query for launcher tab
 chrome.tabs.query({active: true,currentWindow: true},function(tabs){
    launcherId = tabs[0].id;
-   console.log(`Launcher tab ID: ${launcherId}`)
+   console.log(`Launcher tab ID: ${launcherId}`);
    //Listen for clicks on 'run'
    document.getElementById('fetch').addEventListener('click',function(){
       //Display current function
@@ -147,7 +148,7 @@ chrome.runtime.onMessage.addListener(function(request){
                   //If retry limit reached
                   displayFailure();
                   liveDisplay.innerHTML = `<p style="color:red;">Retry limit reached. Flagging site as incomplete</p>`;
-                  console.log(`Retry limit reached on tab ${siteId}. Updating launcher page`)
+                  console.log(`Retry limit reached on tab ${siteId}. Updating launcher page`);
                   chrome.tabs.sendMessage(launcherId,{status: "retry limit reached"},function(response){
                      console.log(`Launcher page response: ${response.status}`);
                   });
@@ -183,7 +184,7 @@ chrome.runtime.onMessage.addListener(function(request){
             };
          });
       },2000);
-   }
+   };
 });
 //Listen for URL changes on the tabs (Errors)
 chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
