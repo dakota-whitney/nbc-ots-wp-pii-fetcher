@@ -57,12 +57,10 @@ function deleteUnconfirmed(){
 }
 function retryDownloads(){
    retries++;
+   liveDisplay.innerHTML = `<p>Re-downloading ${retries} times</p><img src="spinner.gif" id="loading">`;
    console.log("Sending retry command to site")
    chrome.tabs.sendMessage(siteId,{command: "retry"},function(siteResponse){
       console.log(`Site response: ${siteResponse.status}`);
-      chrome.tabs.sendMessage(launcherId,{status: "retrying",retryCount: retries},function(launcherResponse){
-         console.log(`Launcher page response: ${launcherResponse.status}`);
-      });
    });
 };
 function closeExportPage(){
@@ -71,8 +69,9 @@ function closeExportPage(){
          chrome.tabs.sendMessage(launcherId,{status: "tab closed"},function(response){
             console.log(`Launcher page response: ${response.status}`);
             if(response.status === "complete"){
+               liveDisplay.innerHTML = `<p>Fetching complete</p>`
                window.prompt(`Exports complete. Please note the incomplete sites below (CTRL+C to copy):`,response.incomplete.join("\n"));
-               console.log(`Export complete. Please note the incomplete sites below:\n${response.incomplete.join("\n")}`)
+               console.log(`Export complete. Please note the incomplete sites below:\n${response.incomplete.join("\n")}`);
             };
          });
       });
@@ -134,24 +133,23 @@ chrome.runtime.onMessage.addListener(function(request){
       deleteUnconfirmed();
       setTimeout(() => {
          chrome.downloads.search({query: ["wp-personal-data-file"],orderBy: ["-startTime"]},(downloads) => {
+            //Capture export count
             dlCount = downloads.length;
             console.log(`After removing duplicates, found ${dlCount} unique exports`);
+            //If export count is less than the Wordpress list
             if(dlCount < request.listLength){
                if(retries < 3){
-                  //Handle display and retry
                   displayFailure();
-                  setTimeout(() => {
-                     liveDisplay.innerHTML = `<p>Re-downloading</p><img src="spinner.gif" id="loading">`;
-                     retryDownloads();
-                  },1000);
+                  setTimeout(() => {retryDownloads();},1000);
                }else{
-                  //Handle display and reset
+                  //If retry limit reached
                   displayFailure();
                   liveDisplay.innerHTML = `<p style="color:red;">Retry limit reached. Flagging site as incomplete</p>`;
                   console.log(`Retry limit reached on tab ${siteId}. Updating launcher page`)
                   chrome.tabs.sendMessage(launcherId,{status: "retry limit reached"},function(response){
                      console.log(`Launcher page response: ${response.status}`);
                   });
+                  //Clear downloads and reset count
                   setTimeout(() => {
                      liveDisplay.innerHTML = `<p>Deleting duplicates/p><img src="spinner.gif" id="loading">`;
                      deleteDuplicates();
@@ -168,7 +166,7 @@ chrome.runtime.onMessage.addListener(function(request){
                   },2000);
                }
             } else {
-               //Handle display and reset
+               //If export count is greater than or equal to the Wordpress list
                displaySuccess();
                setTimeout(() => {
                   liveDisplay.innerHTML = `<p>Clearing download history</p>`;
@@ -185,7 +183,7 @@ chrome.runtime.onMessage.addListener(function(request){
       },2000);
    }
 });
-//Listen for URL changes on the tabs (Aka errors)
+//Listen for URL changes on the tabs (Errors)
 chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
    console.log("A tab update event was fired");
    if(changeInfo.url){

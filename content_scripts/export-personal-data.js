@@ -4,7 +4,7 @@ function stageAndDownload(){
     linkList.forEach((link,i) => {
         setTimeout(() => {
             link.click();
-        },i * 2000)
+        },i * 2000);
     });
     setTimeout(() => {downloadExports();},5000);
 };
@@ -29,7 +29,6 @@ chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse){
         if(request.command === "retry"){
             downloadExports();
-            sendResponse({status: "retrying downloads"})
+            sendResponse({status: "retrying downloads"});
         };
-    }
-);
+});
