@@ -172,7 +172,7 @@ chrome.runtime.onMessage.addListener(function(request){
                //If export count is greater than or equal to the Wordpress list
                displaySuccess();
                setTimeout(() => {
-                  liveDisplay.innerHTML = `<p>Clearing download history</p>`;
+                  liveDisplay.innerHTML = `<p>Clearing download history</p><img src="spinner.gif" id="loading">`;
                   console.log(`Exports retrieved. Resetting count and closing site`);
                   resetCount();
                   setTimeout(() => {
