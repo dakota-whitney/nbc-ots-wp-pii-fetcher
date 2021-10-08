@@ -70,8 +70,10 @@ function closeExportPage(){
             console.log(`Launcher page response: ${response.status}`);
             if(response.status === "complete"){
                liveDisplay.innerHTML = `<p>Fetching complete</p>`
-               window.prompt(`Exports complete. Please note the incomplete sites below (CTRL+C to copy):`,response.incomplete.join("\n"));
-               console.log(`Export complete. Please note the incomplete sites below:\n${response.incomplete.join("\n")}`);
+               if(response.incomplete.length > 0){
+                  window.prompt(`Some sites didn't finish. Please note the incomplete sites below (CTRL+C to copy):`,response.incomplete.join("\n"));
+                  console.log(`Some sites didn't finish. Please note the incomplete sites below:\n${response.incomplete.join("\n")}`);
+               };
             };
          });
       });
