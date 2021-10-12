@@ -16,18 +16,27 @@ function downloadExports(){
             clickCount++;
             if(clickCount === linkList.length){
                 setTimeout(() => {
-                    chrome.runtime.sendMessage({status: "downloaded",listLength: linkList.length});
+                    chrome.runtime.sendMessage({request: "count downloads",listLength: linkList.length});
                 },11000);
             };
         },i * 2000);
     });
 };
-//Stage and download exports on first run
-document.onload = stageAndDownload();
+function requestDownload(){
+    chrome.runtime.sendMessage({request: "download"},function(response){
+        console.log(`Background response: ${response.status}`);
+    });
+};
+//Send start message when body loads
+document.body.onload = requestDownload();
 //Listen for retries
 chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse){
-        if(request.command === "retry"){
+    function(message, sender, sendResponse){
+        if(message.command === "start downloads"){
+            stageAndDownload();
+            sendResponse({status: "downloading"});
+        };
+        if(message.command === "retry"){
             downloadExports();
             sendResponse({status: "retrying downloads"});
         };
