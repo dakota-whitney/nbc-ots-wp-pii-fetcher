@@ -31,7 +31,7 @@ extensionPort.onMessage.addListener(function(message){
                 if(siteIndex > 0 && sites[siteIndex - 1].getAttribute("style") !== "border:solid;border-color:red;"){
                     sites[siteIndex - 1].setAttribute("style","border:solid;border-color:blue;");
                 };
-                extensionPort.postMessage({request: "new tab",tabUrl: `${currentSite.href}export-personal-data.php`});
+                extensionPort.postMessage({request: "new tab",exportUrl: `${currentSite.href}export-personal-data.php`});
                 siteIndex++;
             }else{ //End of sites array
                 console.log(`Export complete. Please note the incomplete sites below:\n${incomplete.join("\n")}`);

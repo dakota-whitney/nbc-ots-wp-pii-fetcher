@@ -20,11 +20,11 @@ function initializeExports(){
 };
 function openExportPage(){
    displayProcess("Opening next site...");
-   chrome.tabs.create({windowId: windowId,url: tabUrl,active: false},function(tab){
+   chrome.tabs.create({windowId: windowId,url: exportUrl,active: false},function(tab){
       //Capture tab ID
       siteId = tab.id;
       //Log successful tab open
-      console.log(`Tab ID ${siteId} opened with URL ${tabUrl}\nListening for downloads`);
+      console.log(`Tab ID ${siteId} opened with URL ${exportUrl}\nListening for downloads`);
     });
  };
  function deleteDuplicates(){
@@ -83,7 +83,7 @@ let launcherPort = 0;
 let windowId = 0;
 let launcherId = 0;
 let siteId = 0;
-let tabUrl = "";
+let exportUrl = "";
 let dlCount = 0;
 let retries = 0;
 let running = false;
@@ -114,7 +114,7 @@ chrome.runtime.onConnect.addListener(function(port){
          case "new tab":
             console.log("Received new tab request from launcher");
             //Capture export page URL
-            tabUrl = message.tabUrl;
+            exportUrl = message.exportUrl;
             //If 'new' message from launcher, create new non-active tab
             openExportPage();
          break;
