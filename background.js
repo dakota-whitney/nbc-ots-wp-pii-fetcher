@@ -94,7 +94,6 @@ chrome.browserAction.onClicked.addListener(function(tab){
          chrome.windows.getCurrent(function(window){
             windowId = window.id;
          });
-         running = true;
          launcherId = tab.id;
          console.log(`Launcher ID: ${launcherId}`)
          chrome.tabs.sendMessage(launcherId,{command: "render display"},function(response){
