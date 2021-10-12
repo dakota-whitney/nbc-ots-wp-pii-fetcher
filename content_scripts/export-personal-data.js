@@ -16,7 +16,7 @@ function downloadExports(){
             clickCount++;
             if(clickCount === linkList.length){
                 setTimeout(() => {
-                    chrome.runtime.sendMessage({request: "count downloads",listLength: linkList.length});
+                    chrome.runtime.sendMessage({request: "count exports",listLength: linkList.length});
                 },11000);
             };
         },i * 2000);

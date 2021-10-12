@@ -89,20 +89,21 @@ let retries = 0;
 let running = false;
 chrome.browserAction.onClicked.addListener(function(tab){
    if(tab.url.includes("/wp-admin/my-sites")){
-      window.alert("Please ensure the following before fetching exports:\n\n- You are logged into NBCU SSO in your current browser session\n- You've deleted any existing exports from your Downloads folder\n- You've allowed your browser to download multiple files on all Sites");
-      chrome.windows.getCurrent(function(window){
-         windowId = window.id;
-      });
-      running = true;
-      launcherId = tab.id;
-      console.log(`Launcher ID: ${launcherId}`)
-      chrome.tabs.sendMessage(launcherId,{command: "render display"},function(response){
-         if(response.request === "initialize"){
-            console.log("Launcher page rendered display\nInitializing exports");
-            initializeExports();
-            setTimeout(() => {launcherPort.postMessage({command: "open"})},2000);
-         };
-      });
+      if(window.confirm("Please confirm the following before fetching exports:\n\n- You are logged into NBCU SSO in your current browser session\n- You've deleted any existing exports from your Downloads folder\n- You've allowed your browser to download multiple files on all Sites")){
+         chrome.windows.getCurrent(function(window){
+            windowId = window.id;
+         });
+         running = true;
+         launcherId = tab.id;
+         console.log(`Launcher ID: ${launcherId}`)
+         chrome.tabs.sendMessage(launcherId,{command: "render display"},function(response){
+            if(response.request === "initialize"){
+               console.log("Launcher page rendered display\nInitializing exports");
+               initializeExports();
+               setTimeout(() => {launcherPort.postMessage({command: "open"})},2000);
+            };
+         });
+      };
    };
 });
 chrome.runtime.onConnect.addListener(function(port){
@@ -140,7 +141,7 @@ chrome.runtime.onMessage.addListener(
             });
          };
       break;
-      case "count downloads":
+      case "count exports":
          console.log(`Received count request from export page\nList length is ${message.listLength}\nDeleting duplicates and counting`);
          deleteDuplicates();
          deleteUnconfirmed();
