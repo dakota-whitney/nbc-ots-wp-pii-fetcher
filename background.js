@@ -121,7 +121,7 @@ chrome.runtime.onConnect.addListener(function(port){
          case "complete":
             console.log("Received complete request from launcher");
             if(message.incomplete.length > 0){
-               window.prompt(`Some sites didn't finish. Please note the incomplete sites below (CTRL+C to copy):`,message.incomplete.join("\n"));
+               window.alert(`Some sites didn't finish. Please note the incomplete sites below\n:${message.incomplete.join("\n")}`);
                console.log(`Some sites didn't finish. Please note the incomplete sites below:\n${message.incomplete.join("\n")}`);
             };
             running = false;
@@ -212,6 +212,7 @@ chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
          }else if(changeInfo.url.includes("inbcu.com/login/")){
             displayProcess("You are not logged into NBCU SSO. Please login and try again");
             running = false;
+            launcherPort.disconnect;
          };
       };
       if(tabId === launcherId && changeInfo.status === "loading"){
@@ -219,5 +220,11 @@ chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
          running = false;
          launcherPort.disconnect;
       };
+   };
+});
+chrome.downloads.onChanged.addListener(function(download){
+   if(running && download.filename.current){
+      console.log(`Download ID ${download.id} was changed`)
+      console.log(`Download name: ${download.filename.current}`);
    };
 });
