@@ -80,8 +80,8 @@ let exportCount = 0;
 let retries = 0;
 let running = false;
 chrome.browserAction.onClicked.addListener(function(tab){
-   if(tab.url.includes("/wp-admin/my-sites")){
-      running = window.confirm("Please confirm the following before fetching exports:\n\n- You are logged into NBCU SSO in your current browser session\n\n- You've deleted any existing exports from your Downloads folder\n\n- You've allowed your browser to download multiple files on all Sites");
+   if(tab.url.includes("/wp-admin/")){
+      running = window.confirm(`Please confirm the following before fetching exports:\n\n- You are logged into ${tab.url.includes("microsites") ? `SSO on all Microsites` : `NBCU SSO`} in your current browser session\n\n- You've deleted any existing exports from your Downloads folder\n\n- You've allowed your browser to download multiple files on all ${tab.url.includes("microsites") ? `Microsites` : `Sites`}`);
       if(running){
          chrome.windows.getCurrent(function(window){
             windowId = window.id;

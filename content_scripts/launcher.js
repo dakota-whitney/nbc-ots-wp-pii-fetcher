@@ -1,9 +1,8 @@
-//Log successful inject message
-console.log(`launcher.js successfully injected`)
 //Declare global varibales/functions
-let sites = document.querySelectorAll('p.my-sites-actions > a:nth-child(2)');
+let microsites = window.location.href.includes("microsites") ? true : false;
+console.log(`${microsites ? "Microsites launcher successfully injected" : "Primary launcher successfully injected"}`)
+let sites = microsites ? Array.from(document.querySelectorAll("#the-list > tr > td > strong > a")).filter(microsite => {return !/microsites|ranger|cazatormentas/.test(microsite.innerText)}) : document.querySelectorAll('p.my-sites-actions > a:nth-child(2)');
 let siteIndex = 0;
-let currentSite = "";
 let incomplete = [];
 let liveDisplay = "";
 let countDisplay = "";
@@ -13,7 +12,12 @@ chrome.runtime.onMessage.addListener(
     function(message,sender,sendResponse){
         if(message.command === "render display"){
             console.log("Received render display command from extension");
-            document.querySelector("#myblogs > table").innerHTML = `<h3 style="font-style:italic;">PII Fetcher Live Display</h3><div style="width:250px;height:25px;background-color:white;font-size:12px;font-weight:bolder;border:1px solid black;"><span>Last export count: <span id="count-display"></span></span></div><p id="live-display"></p>`;
+            if(microsites){
+                document.querySelector("#wpbody-content > div.wrap > ul").innerHTML = `<h3 style="font-style:italic;">PII Fetcher Live Display</h3><div style="width:250px;height:25px;background-color:white;font-size:12px;font-weight:bolder;border:1px solid black;"><span>Last export count: <span id="count-display"></span></span></div><p id="live-display"></p>`;
+                document.querySelector("#form-site-list > div.tablenav.top").setAttribute("style","display:none;");
+            }else{
+                document.querySelector("#myblogs > table").innerHTML = `<h3 style="font-style:italic;">PII Fetcher Live Display</h3><div style="width:250px;height:25px;background-color:white;font-size:12px;font-weight:bolder;border:1px solid black;"><span>Last export count: <span id="count-display"></span></span></div><p id="live-display"></p>`;
+            };
             liveDisplay = document.getElementById("live-display");
             countDisplay = document.getElementById("count-display");
             sendResponse({request: "initialize"});
@@ -22,16 +26,17 @@ chrome.runtime.onMessage.addListener(
 );
 //Listen for connections
 extensionPort.onMessage.addListener(function(message){
+    let currentSite = "";
     switch(message.command){
         case "open":
             currentSite = sites[siteIndex];
             if(siteIndex < sites.length){
-                console.log(`Current site: ${currentSite.href.split("/")[2]}\nsiteIndex: ${siteIndex}`);
+                console.log(`Current site: ${microsites ? currentSite.innerText : currentSite.href.split("/")[2]}\nsiteIndex: ${siteIndex}`);
                 currentSite.setAttribute("style","border:solid;border-color:yellow;");
                 if(siteIndex > 0 && sites[siteIndex - 1].getAttribute("style") !== "border:solid;border-color:red;"){
                     sites[siteIndex - 1].setAttribute("style","border:solid;border-color:blue;");
                 };
-                extensionPort.postMessage({request: "new tab",exportUrl: `${currentSite.href}export-personal-data.php`});
+                extensionPort.postMessage({request: "new tab",exportUrl: microsites ? `https://${currentSite.innerText}/wp-admin/export-personal-data.php` : `${currentSite.href}export-personal-data.php`});
                 siteIndex++;
             }else{ //End of sites array
                 console.log(`Export complete. Please note the incomplete sites below:\n${incomplete.join("\n")}`);
@@ -45,12 +50,16 @@ extensionPort.onMessage.addListener(function(message){
         break;
         case "incomplete":
             currentSite = sites[siteIndex - 1];
-            if(currentSite.href.includes("/telemundo/")){
-                incomplete.push(currentSite.href.split("/")[2] + "/telemundo");
-            }else if(currentSite.href.includes("/qa/")){
-                incomplete.push(currentSite.href.split("/")[2] + "/qa");
+            if(!microsites){
+                if(currentSite.href.includes("/telemundo/")){
+                    incomplete.push(currentSite.href.split("/")[2] + "/telemundo");
+                }else if(currentSite.href.includes("/qa/")){
+                    incomplete.push(currentSite.href.split("/")[2] + "/qa");
+                }else{
+                    incomplete.push(currentSite.href.split("/")[2]);
+                };
             }else{
-                incomplete.push(currentSite.href.split("/")[2]);
+                incomplete.push(currentSite.innerText);
             };
             currentSite.setAttribute("style","border:solid;border-color:red;");
             console.log(`Too many retries on ${incomplete[incomplete.length - 1]}. Skipping and flagging as incomplete\nCurrent incompleted sites: ${incomplete.join("\n")}`);

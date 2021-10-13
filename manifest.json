@@ -22,6 +22,10 @@
           "js": ["./content_scripts/launcher.js"]
         },
         {
+          "matches": ["https://*/wp-admin/network/sites.php"],
+          "js": ["./content_scripts/launcher.js"]
+        },
+        {
           "matches": ["https://*/wp-admin/export-personal-data.php"],
           "js": ["./content_scripts/export-personal-data.js"]
         },
