@@ -3,7 +3,7 @@ function displayProcess(process){
    launcherPort.postMessage({command: "display",currentProcess: process});
 };
 function displayCount(successful){
-   launcherPort.postMessage({command: "display",count: dlCount,wasSuccessful: successful});
+   launcherPort.postMessage({command: "display",count: exportCount,wasSuccessful: successful});
 };
 function initializeExports(){
    displayProcess("Initializing download manager...");
@@ -52,17 +52,9 @@ function deleteUnconfirmed(){
       });
    });
 };
-function retryDownloads(){
-   retries++;
-   displayProcess(`Re-downloading ${retries} time(s)...`);
-   console.log("Sending retry command to site")
-   chrome.tabs.sendMessage(siteId,{command: "retry"},function(response){
-      console.log(`Site response: ${response.status}`);
-   });
-};
 function resetCount(){
    displayProcess("Clearing download history...");
-   dlCount = 0;
+   exportCount = 0;
    retries = 0;
    chrome.downloads.erase({query: ["wp-personal-data-file"],orderBy: ["-startTime"]},function(erased){
       console.log(`Found ${erased.length} exports to erase from history`);
@@ -84,7 +76,7 @@ let windowId = 0;
 let launcherId = 0;
 let siteId = 0;
 let exportUrl = "";
-let dlCount = 0;
+let exportCount = 0;
 let retries = 0;
 let running = false;
 chrome.browserAction.onClicked.addListener(function(tab){
@@ -100,7 +92,7 @@ chrome.browserAction.onClicked.addListener(function(tab){
             if(response.request === "initialize"){
                console.log("Launcher page rendered display\nInitializing exports");
                initializeExports();
-               setTimeout(() => {launcherPort.postMessage({command: "open"})},2000);
+               setTimeout(() => {launcherPort.postMessage({command: "open"})},1000);
             };
          });
       };
@@ -134,63 +126,68 @@ chrome.runtime.onMessage.addListener(
    function(message,sender,sendResponse){
       switch(message.request){
          case "download":
-         console.log("Export page has fully loaded\nReceived download request from export page");
-         if(running){
-            chrome.tabs.sendMessage(siteId,{command: "start downloads"},function(){
+            console.log("Export page has fully loaded\nReceived download request from export page");
+            if(running){
+               sendResponse({command: "download"})
                displayProcess("Fetching exports...");
-            });
-         };
+            };
       break;
       case "count exports":
-         console.log(`Received count request from export page\nList length is ${message.listLength}\nDeleting duplicates and counting`);
+         sendResponse({status: "counting"});
+         console.log(`Received count request from export page\nList length is ${message.userCount}\nDeleting duplicates and counting`);
          deleteDuplicates();
          deleteUnconfirmed();
-         setTimeout(() => {
-            chrome.downloads.search({query: ["wp-personal-data-file"],orderBy: ["-startTime"]},(downloads) => {
-               //Capture export count
-               dlCount = downloads.length;
-               console.log(`After removing duplicates, found ${dlCount} unique exports`);
-               //Failed run
-               if(dlCount < message.listLength){
-                  displayCount(false);
-                  //If under retry limit
-                  if(retries < 3){
-                     setTimeout(() => {retryDownloads();},1000);
-                  }else{ //Retry limit reached
-                     displayProcess("Retry limit reached. Marking incomplete");
-                     console.log(`Retry limit reached on tab ${siteId}. Updating launcher page`);
-                     launcherPort.postMessage({command: "incomplete"});
-                     //Clear downloads and reset count
-                     setTimeout(() => {
-                        console.log("Deleting duplicates and unconfirmed");
-                        //Delete duplicates
-                        deleteDuplicates();
-                        deleteUnconfirmed();
-                        setTimeout(() => {
-                           console.log("Resetting download count")
-                           //Reset download count
-                           resetCount();
-                           setTimeout(() => {
-                              console.log("Closing export oage")
-                              closeExportPage();
-                           },2000);
-                        },2000);
-                     },2000);
-                  };
-               } else {
-                  //Successful run
-                  displayCount(true);
-                  console.log(`Exports retrieved. Resetting count and closing site`);
+         setTimeout(() => {chrome.downloads.search({query: ["wp-personal-data-file"],orderBy: ["-startTime"]},(downloads) => {
+            //Capture export count
+            exportCount = downloads.length;
+            console.log(`Found ${exportCount} unique exports`);
+            //Failed run
+            if(exportCount < message.userCount){
+               displayCount(false);
+               //If under retry limit
+               if(retries < 3){
+                  retries++;
                   setTimeout(() => {
-                     resetCount();
+                     displayProcess(`Re-downloading ${retries} time(s)...`);
+                     console.log("Sending retry command to export page");
+                     chrome.tabs.sendMessage(siteId,{command: "retry"},function(response){
+                        console.log(`Export page status: ${response.status}`);
+                     });
+                  },1000);
+               }else{ //Retry limit reached
+                  displayProcess("Retry limit reached. Marking incomplete");
+                  console.log(`Retry limit reached on tab ${siteId}. Updating launcher page`);
+                  launcherPort.postMessage({command: "incomplete"});
+                  //Clear downloads and reset count
+                  setTimeout(() => {
+                     console.log("Deleting duplicates and unconfirmed");
+                     //Delete duplicates
+                     deleteDuplicates();
+                     deleteUnconfirmed();
                      setTimeout(() => {
-                        console.log(`Closing export page`)
-                        closeExportPage();
-                     },2000);
+                        console.log("Resetting download count")
+                        //Reset download count
+                        resetCount();
+                        setTimeout(() => {
+                           console.log("Closing export oage")
+                           closeExportPage();
+                        },1000);
+                     },1000);
                   },1000);
                };
-            });
-         },2000);
+            } else {
+               //Successful run
+               displayCount(true);
+               console.log(`Exports retrieved. Resetting export count`);
+               setTimeout(() => {
+                  resetCount();
+                  setTimeout(() => {
+                     console.log(`Closing export page`)
+                     closeExportPage();
+                  },1000);
+               },1000);
+            };
+         });},1000);
       break;
       }; //End switch
    }
@@ -223,8 +220,8 @@ chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
    };
 });
 chrome.downloads.onChanged.addListener(function(download){
-   if(running && download.filename.current){
+   if(running){
       console.log(`Download ID ${download.id} was changed`)
-      console.log(`Download name: ${download.filename.current}`);
+      console.log(download);
    };
 });

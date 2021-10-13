@@ -9,22 +9,24 @@ function stageAndDownload(){
     setTimeout(() => {downloadExports();},5000);
 };
 function downloadExports(){
-    let clickCount = 0;
     linkList.forEach((link,i) => {
         setTimeout(() => {
             link.click();
-            clickCount++;
-            if(clickCount === linkList.length){
+            if(i === linkList.length - 1){
                 setTimeout(() => {
-                    chrome.runtime.sendMessage({request: "count exports",listLength: linkList.length});
-                },11000);
+                    chrome.runtime.sendMessage({request: "count exports",userCount: linkList.length},function(response){
+                        console.log(`Background page status: ${response.status}`);
+                    });
+                },10000);
             };
         },i * 2000);
     });
 };
 function requestDownload(){
     chrome.runtime.sendMessage({request: "download"},function(response){
-        console.log(`Background response: ${response.status}`);
+        if(response.command === "download"){
+            stageAndDownload();
+        };
     });
 };
 //Send start message when body loads
@@ -32,12 +34,8 @@ document.body.onload = requestDownload();
 //Listen for retries
 chrome.runtime.onMessage.addListener(
     function(message, sender, sendResponse){
-        if(message.command === "start downloads"){
-            stageAndDownload();
-            sendResponse({status: "downloading"});
-        };
         if(message.command === "retry"){
             downloadExports();
-            sendResponse({status: "retrying downloads"});
+            sendResponse({status: "re-downloading"});
         };
 });
