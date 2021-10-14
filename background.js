@@ -20,7 +20,7 @@ function initializeExports(){
 };
 function openExportPage(){
    displayProcess("Opening next site...");
-   chrome.tabs.create({windowId: windowId,url: exportUrl,active: false},function(tab){
+   chrome.tabs.create({windowId: launcherWindow,url: exportUrl,active: false},function(tab){
       //Capture tab ID
       siteId = tab.id;
       //Log successful tab open
@@ -72,7 +72,7 @@ function closeExportPage(){
 };
 //Declare global variables
 let launcherPort = 0;
-let windowId = 0;
+let launcherWindow = 0;
 let launcherId = 0;
 let siteId = 0;
 let exportUrl = "";
@@ -84,7 +84,7 @@ chrome.browserAction.onClicked.addListener(function(tab){
       running = window.confirm(`Please confirm the following before fetching exports:\n\n- You are logged into ${tab.url.includes("microsites") ? `SSO on all Microsites` : `NBCU SSO`} in your current browser session\n\n- You've deleted any existing exports from your Downloads folder\n\n- You've allowed your browser to download multiple files on all ${tab.url.includes("microsites") ? `Microsites` : `Sites`}`);
       if(running){
          chrome.windows.getCurrent(function(window){
-            windowId = window.id;
+            launcherWindow = window.id;
          });
          launcherId = tab.id;
          console.log(`Launcher ID: ${launcherId}`)
