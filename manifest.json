@@ -7,10 +7,7 @@
     "browser_action": {
         "default_title": "NBC OTS PII Fetcher",
         "browser_style": true,
-        "default_icon": {
-          "16": "./download-icon.png",
-          "32": "./download-icon.png"
-        }
+        "default_icon": "./download-icon.png"
       },
       "background": {
         "scripts": ["background.js"],

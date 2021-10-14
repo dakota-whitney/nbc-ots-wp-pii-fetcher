@@ -13,10 +13,10 @@ chrome.runtime.onMessage.addListener(
         if(message.command === "render display"){
             console.log("Received render display command from extension");
             if(microsites){
-                document.querySelector("#wpbody-content > div.wrap > ul").innerHTML = `<h3 style="font-style:italic;">PII Fetcher Live Display</h3><div style="width:250px;height:25px;background-color:white;font-size:12px;font-weight:bolder;border:1px solid black;"><span>Last export count: <span id="count-display"></span></span></div><p id="live-display"></p>`;
+                document.querySelector("#wpbody-content > div.wrap > ul").innerHTML = `<h3 style="font-style:italic;">PII Fetcher Live Display</h3><div style="width:200px;height:25px;background-color:white;font-size:12px;font-weight:bolder;border:1px solid black;"><span>Last export count: <span id="count-display"></span></span></div><p id="live-display"></p>`;
                 document.querySelector("#form-site-list > div.tablenav.top").setAttribute("style","display:none;");
             }else{
-                document.querySelector("#myblogs > table").innerHTML = `<h3 style="font-style:italic;">PII Fetcher Live Display</h3><div style="width:250px;height:25px;background-color:white;font-size:12px;font-weight:bolder;border:1px solid black;"><span>Last export count: <span id="count-display"></span></span></div><p id="live-display"></p>`;
+                document.querySelector("#myblogs > table").innerHTML = `<h3 style="font-style:italic;">PII Fetcher Live Display</h3><div style="width:200px;height:25px;background-color:white;font-size:12px;font-weight:bolder;border:1px solid black;"><span>Last export count: <span id="count-display"></span></span></div><p id="live-display"></p>`;
             };
             liveDisplay = document.getElementById("live-display");
             countDisplay = document.getElementById("count-display");
@@ -24,15 +24,17 @@ chrome.runtime.onMessage.addListener(
         };
     }
 );
-//Listen for connections
+//Listen for messages from extension
 extensionPort.onMessage.addListener(function(message){
     let currentSite = "";
     switch(message.command){
         case "open":
             currentSite = sites[siteIndex];
+            //If we're still working on sites
             if(siteIndex < sites.length){
                 console.log(`Current site: ${microsites ? currentSite.innerText : currentSite.href.split("/")[2]}\nsiteIndex: ${siteIndex}`);
                 currentSite.setAttribute("style","border:solid;border-color:yellow;");
+                //Assume success on last site if not highlighted red
                 if(siteIndex > 0 && sites[siteIndex - 1].getAttribute("style") !== "border:solid;border-color:red;"){
                     sites[siteIndex - 1].setAttribute("style","border:solid;border-color:blue;");
                 };
@@ -75,16 +77,12 @@ extensionPort.onMessage.addListener(function(message){
             };
             if(message.count >= 0){
                 console.log("Received display count message from extension");
-                countDisplay.innerText = message.count;
                 if(message.wasSuccessful){
                     countDisplay.setAttribute("style","color:blue;");
-                    liveDisplay.setAttribute("style","color:blue;font-style:italic;opacity:80%;");
-                    liveDisplay.innerText = `Exports retrieved`;
                 }else{
                     countDisplay.setAttribute("style","color:red;");
-                    liveDisplay.setAttribute("style","color:red;font-style:italic;opacity:80%;");
-                    liveDisplay.innerText = `Not enough downloads`;
                 };
+                countDisplay.innerText = message.count;
             };
         break;
     };

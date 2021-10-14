@@ -6,16 +6,23 @@ function displayCount(successful){
    launcherPort.postMessage({command: "display",count: exportCount,wasSuccessful: successful});
 };
 function initializeExports(){
-   displayProcess("Initializing download manager...");
    chrome.downloads.search({query: ["wp-personal-data-file"],orderBy: ["-startTime"]},function(existingExports){
-      console.log(`Found ${existingExports.length} existing exports to delete`)
-      existingExports.forEach((existingExport) => {
-         chrome.downloads.removeFile(existingExport.id,function(){
-            chrome.downloads.erase({id: existingExport.id},function(){
-               console.log(`Existing export ${existingExport.id} deleted`);
+      console.log(`Found ${existingExports.length} existing exports to delete`);
+      if(existingExports.length > 0){
+         displayProcess("Initializing download manager...");
+         existingExports.forEach((existingExport,i) => {
+            chrome.downloads.removeFile(existingExport.id,function(){
+               chrome.downloads.erase({id: existingExport.id},function(){
+                  console.log(`Existing export ${existingExport.id} deleted`);
+                  if(i === existingExports.length - 1){
+                     launcherPort.postMessage({command: "open"})
+                  };
+               });
             });
          });
-      });
+      }else{
+         launcherPort.postMessage({command: "open"})
+      };
    });
 };
 function openExportPage(){
@@ -27,17 +34,25 @@ function openExportPage(){
       console.log(`Tab ID ${siteId} opened with URL ${exportUrl}\nListening for downloads`);
     });
  };
- function deleteDuplicates(){
-   displayProcess("Downloads complete. Deleting duplicates...");
+function dedupAndCount(){
    chrome.downloads.search({query: ["wp-personal-data-file","(",")"],orderBy: ["-startTime"]},function(duplicates){
       console.log(`Found ${duplicates.length} duplicates to delete`)
-      duplicates.forEach((duplicate) => {
-         chrome.downloads.removeFile(duplicate.id,function(){
-            chrome.downloads.erase({id: duplicate.id},function(){
-               console.log(`Duplicate ${duplicate.id} deleted`);
+      if(duplicates.length > 0){
+         displayProcess("Downloads complete. Deleting duplicates...");
+         duplicates.forEach((duplicate,i) => {
+            chrome.downloads.removeFile(duplicate.id,function(){
+               chrome.downloads.erase({id: duplicate.id},function(){
+                  console.log(`Duplicate ${duplicate.id} deleted`);
+                  if(i === duplicates.length - 1){
+                     countExports();
+                  };
+               });
             });
          });
-      });
+      }else{
+         displayProcess("Downloads complete. Counting exports...");
+         countExports();
+      };
    });
 };
 function deleteUnconfirmed(){
@@ -46,7 +61,7 @@ function deleteUnconfirmed(){
       unconfirmed.forEach((file) => {
          chrome.downloads.removeFile(file.id,function(){
             chrome.downloads.erase({id: file.id},function(){
-               console.log(`Duplicate ${file.id} deleted`);
+               console.log(`Unconfirmed download ${file.id} deleted`);
             });
          });
       });
@@ -60,43 +75,47 @@ function countExports(){
       //Failed run
       if(exportCount < userCount){
          displayCount(false);
+         deleteUnconfirmed();
          //If under retry limit
          if(retries < 3){
             retries++;
-            setTimeout(() => {
-               displayProcess(`Re-downloading ${retries} time(s)...`);
-               console.log("Sending retry command to export page");
-               chrome.tabs.sendMessage(siteId,{command: "retry"},function(response){
-                  console.log(`Export page status: ${response.status}`);
-               });
-            },1000);
+            displayProcess(`Re-downloading ${retries} time(s)...`);
+            console.log("Sending retry command to export page");
+            chrome.tabs.sendMessage(siteId,{command: "retry"},function(response){
+               console.log(`Export page status: ${response.status}`);
+            });
          }else{ //Retry limit reached
             displayProcess("Retry limit reached. Marking incomplete");
             console.log(`Retry limit reached on tab ${siteId}. Updating launcher page`);
             launcherPort.postMessage({command: "incomplete"});
             //Clear downloads and reset count
-            setTimeout(() => {console.log("Deleting duplicates and unconfirmed");deleteDuplicates();deleteUnconfirmed();},1000);
-            setTimeout(() => {console.log("Resetting download count");resetCount();},2000);
-            setTimeout(() => {console.log("Closing export oage");closeExportPage();},3000);
+            setTimeout(() => {console.log("Resetting download count");resetCount();},1000);
          };
       }else{
          //Successful run
          displayCount(true);
+         deleteUnconfirmed();
          console.log(`Exports retrieved. Resetting export count`);
          setTimeout(() => {console.log("Resetting download count");resetCount();},1000);
-         setTimeout(() => {console.log(`Closing export page`);closeExportPage();},2000);
       };
    });
 };
 function resetCount(){
-   displayProcess("Clearing download history...");
    exportCount = 0;
    retries = 0;
    chrome.downloads.erase({query: ["wp-personal-data-file"],orderBy: ["-startTime"]},function(erased){
       console.log(`Found ${erased.length} exports to erase from history`);
-      erased.forEach((erasedItem) => {
-         console.log(`Export ${erasedItem.id} erased from history`);
-      });
+      if(erased.length > 0){
+         displayProcess("Clearing download history...");
+         erased.forEach((erasedItem,i) => {
+            console.log(`Export ${erasedItem.id} erased from history`);
+            if(i === erased.length - 1){
+               closeExportPage();
+            };
+         });
+      }else{
+         closeExportPage();
+      };
    });
 };
 function closeExportPage(){
@@ -129,7 +148,7 @@ chrome.browserAction.onClicked.addListener(function(tab){
             if(response.request === "initialize"){
                console.log("Launcher page rendered display\nInitializing exports");
                initializeExports();
-               setTimeout(() => {launcherPort.postMessage({command: "open"})},1000);
+               //setTimeout(() => {launcherPort.postMessage({command: "open"})},1000);
             };
          });
       };
@@ -173,9 +192,7 @@ chrome.runtime.onMessage.addListener(
          sendResponse({status: "counting"});
          userCount = message.userCount;
          console.log(`Received count request from export page\nUser count is ${userCount}\nDeleting duplicates and counting`);
-         deleteDuplicates();
-         deleteUnconfirmed();
-         setTimeout(() => {countExports()},1000);
+         dedupAndCount();
       break;
       };
    }
@@ -183,7 +200,7 @@ chrome.runtime.onMessage.addListener(
 //Listen for URL changes on the tabs (Errors)
 chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
    if(running){
-      console.log(`tabId ${tabId} was updated`);
+      console.log(`tab ${tabId} was updated`);
       console.log(changeInfo);
       if(tabId === siteId && changeInfo.url){
          if(changeInfo.url.includes("/wp-content/")){
@@ -191,7 +208,7 @@ chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
             displayProcess("An error occured while fetching. Re-downloading...");
             setTimeout(() => {chrome.tabs.remove(siteId,function(){openExportPage();});},1000);
          }else if(changeInfo.url.includes("inbcu.com/login/")){
-            displayProcess("You are not logged into NBCU SSO. Please login and try again");
+            displayProcess("You are not logged into NBCU SSO. Please delete your exports, login on the new tab tab, and fetch exports again");
             running = false;
             launcherPort.disconnect;
          };
