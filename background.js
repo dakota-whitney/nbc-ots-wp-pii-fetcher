@@ -159,33 +159,16 @@ chrome.runtime.onMessage.addListener(
                   console.log(`Retry limit reached on tab ${siteId}. Updating launcher page`);
                   launcherPort.postMessage({command: "incomplete"});
                   //Clear downloads and reset count
-                  setTimeout(() => {
-                     console.log("Deleting duplicates and unconfirmed");
-                     //Delete duplicates
-                     deleteDuplicates();
-                     deleteUnconfirmed();
-                     setTimeout(() => {
-                        console.log("Resetting download count")
-                        //Reset download count
-                        resetCount();
-                        setTimeout(() => {
-                           console.log("Closing export oage")
-                           closeExportPage();
-                        },1000);
-                     },1000);
-                  },1000);
+                  setTimeout(() => {console.log("Deleting duplicates and unconfirmed");deleteDuplicates();deleteUnconfirmed();},1000);
+                  setTimeout(() => {console.log("Resetting download count");resetCount();},2000);
+                  setTimeout(() => {console.log("Closing export oage");closeExportPage();},3000);
                };
             } else {
                //Successful run
                displayCount(true);
                console.log(`Exports retrieved. Resetting export count`);
-               setTimeout(() => {
-                  resetCount();
-                  setTimeout(() => {
-                     console.log(`Closing export page`)
-                     closeExportPage();
-                  },1000);
-               },1000);
+               setTimeout(() => {console.log("Resetting download count");resetCount();},1000);
+               setTimeout(() => {console.log(`Closing export page`);closeExportPage();},2000);
             };
          });},1000);
       break;
