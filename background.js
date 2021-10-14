@@ -52,6 +52,42 @@ function deleteUnconfirmed(){
       });
    });
 };
+function countExports(){
+   chrome.downloads.search({query: ["wp-personal-data-file"],orderBy: ["-startTime"]},(downloads) => {
+      //Capture export count
+      exportCount = downloads.length;
+      console.log(`Found ${exportCount} unique exports`);
+      //Failed run
+      if(exportCount < userCount){
+         displayCount(false);
+         //If under retry limit
+         if(retries < 3){
+            retries++;
+            setTimeout(() => {
+               displayProcess(`Re-downloading ${retries} time(s)...`);
+               console.log("Sending retry command to export page");
+               chrome.tabs.sendMessage(siteId,{command: "retry"},function(response){
+                  console.log(`Export page status: ${response.status}`);
+               });
+            },1000);
+         }else{ //Retry limit reached
+            displayProcess("Retry limit reached. Marking incomplete");
+            console.log(`Retry limit reached on tab ${siteId}. Updating launcher page`);
+            launcherPort.postMessage({command: "incomplete"});
+            //Clear downloads and reset count
+            setTimeout(() => {console.log("Deleting duplicates and unconfirmed");deleteDuplicates();deleteUnconfirmed();},1000);
+            setTimeout(() => {console.log("Resetting download count");resetCount();},2000);
+            setTimeout(() => {console.log("Closing export oage");closeExportPage();},3000);
+         };
+      }else{
+         //Successful run
+         displayCount(true);
+         console.log(`Exports retrieved. Resetting export count`);
+         setTimeout(() => {console.log("Resetting download count");resetCount();},1000);
+         setTimeout(() => {console.log(`Closing export page`);closeExportPage();},2000);
+      };
+   });
+};
 function resetCount(){
    displayProcess("Clearing download history...");
    exportCount = 0;
@@ -74,11 +110,12 @@ function closeExportPage(){
 let launcherPort = 0;
 let launcherWindow = 0;
 let launcherId = 0;
+let running = false;
 let siteId = 0;
 let exportUrl = "";
+let userCount = 0;
 let exportCount = 0;
 let retries = 0;
-let running = false;
 chrome.browserAction.onClicked.addListener(function(tab){
    if(tab.url.includes("/wp-admin/")){
       running = window.confirm(`Please confirm the following before fetching exports:\n\n- You are logged into ${tab.url.includes("microsites") ? `SSO on all Microsites` : `NBCU SSO`} in your current browser session\n\n- You've deleted any existing exports from your Downloads folder\n\n- You've allowed your browser to download multiple files on all ${tab.url.includes("microsites") ? `Microsites` : `Sites`}`);
@@ -134,45 +171,13 @@ chrome.runtime.onMessage.addListener(
       break;
       case "count exports":
          sendResponse({status: "counting"});
-         console.log(`Received count request from export page\nList length is ${message.userCount}\nDeleting duplicates and counting`);
+         userCount = message.userCount;
+         console.log(`Received count request from export page\nUser count is ${userCount}\nDeleting duplicates and counting`);
          deleteDuplicates();
          deleteUnconfirmed();
-         setTimeout(() => {chrome.downloads.search({query: ["wp-personal-data-file"],orderBy: ["-startTime"]},(downloads) => {
-            //Capture export count
-            exportCount = downloads.length;
-            console.log(`Found ${exportCount} unique exports`);
-            //Failed run
-            if(exportCount < message.userCount){
-               displayCount(false);
-               //If under retry limit
-               if(retries < 3){
-                  retries++;
-                  setTimeout(() => {
-                     displayProcess(`Re-downloading ${retries} time(s)...`);
-                     console.log("Sending retry command to export page");
-                     chrome.tabs.sendMessage(siteId,{command: "retry"},function(response){
-                        console.log(`Export page status: ${response.status}`);
-                     });
-                  },1000);
-               }else{ //Retry limit reached
-                  displayProcess("Retry limit reached. Marking incomplete");
-                  console.log(`Retry limit reached on tab ${siteId}. Updating launcher page`);
-                  launcherPort.postMessage({command: "incomplete"});
-                  //Clear downloads and reset count
-                  setTimeout(() => {console.log("Deleting duplicates and unconfirmed");deleteDuplicates();deleteUnconfirmed();},1000);
-                  setTimeout(() => {console.log("Resetting download count");resetCount();},2000);
-                  setTimeout(() => {console.log("Closing export oage");closeExportPage();},3000);
-               };
-            } else {
-               //Successful run
-               displayCount(true);
-               console.log(`Exports retrieved. Resetting export count`);
-               setTimeout(() => {console.log("Resetting download count");resetCount();},1000);
-               setTimeout(() => {console.log(`Closing export page`);closeExportPage();},2000);
-            };
-         });},1000);
+         setTimeout(() => {countExports()},1000);
       break;
-      }; //End switch
+      };
    }
 );
 //Listen for URL changes on the tabs (Errors)
