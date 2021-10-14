@@ -189,11 +189,7 @@ chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
          if(changeInfo.url.includes("/wp-content/")){
             console.log(`An error occured while downloading\nReloading export page`);
             displayProcess("An error occured while fetching. Re-downloading...");
-            setTimeout(() => {
-               chrome.tabs.remove(siteId,function(){
-                  openExportPage();
-               });
-            },1000);
+            setTimeout(() => {chrome.tabs.remove(siteId,function(){openExportPage();});},1000);
          }else if(changeInfo.url.includes("inbcu.com/login/")){
             displayProcess("You are not logged into NBCU SSO. Please login and try again");
             running = false;
