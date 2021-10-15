@@ -69,7 +69,7 @@ extensionPort.onMessage.addListener(function(message){
         case "display":
             currentSite = sites[siteIndex - 1];
             if(message.currentProcess){
-                if(/error|limit|SSO|^No export/.test(message.currentProcess)){
+                if(/error|limit|SSO|^No/.test(message.currentProcess)){
                     liveDisplay.setAttribute("style","color:red;font-style:italic;opacity:80%;");
                     currentSite.removeAttribute("style");
                 }else{

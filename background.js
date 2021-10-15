@@ -189,7 +189,7 @@ chrome.runtime.onMessage.addListener(
             case "download":
                users = message.users;
                console.log("Export page has fully loaded\nReceived download request from export page");
-               displayProcess(`${users.length} users detected. Fetching exports...`);
+               displayProcess(`${users.length} data requests detected. Fetching exports...`);
                sendResponse({command: "download"});
          break;
          case "count exports":
