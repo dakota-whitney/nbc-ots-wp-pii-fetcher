@@ -23,11 +23,17 @@ function downloadExports(){
     });
 };
 function requestDownload(){
-    chrome.runtime.sendMessage({request: "download"},function(response){
-        if(response.command === "download"){
-            stageAndDownload();
-        };
-    });
+    if(linkList.length > 0){
+        chrome.runtime.sendMessage({request: "download"},function(response){
+            if(response.command === "download"){
+                stageAndDownload();
+            };
+        });
+    }else{
+        chrome.runtime.sendMessage({request: "no downloads"},function(response){
+            console.log(`Background status: ${response.status}`);
+        });
+    };
 };
 //Send start message when body loads
 document.body.onload = requestDownload();

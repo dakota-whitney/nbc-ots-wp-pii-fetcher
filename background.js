@@ -180,23 +180,27 @@ chrome.runtime.onConnect.addListener(function(port){
 });
 chrome.runtime.onMessage.addListener(
    function(message,sender,sendResponse){
-      switch(message.request){
-         case "download":
-            console.log("Export page has fully loaded\nReceived download request from export page");
-            if(running){
+      if(running){
+         switch(message.request){
+            case "no downloads":
+               console.log(`No export links detected on current export page`);
+               sendResponse({status: "displaying no downloads"});
+               displayProcess("No export links detected on current export page");
+            break;
+            case "download":
+               console.log("Export page has fully loaded\nReceived download request from export page");
                sendResponse({command: "download"})
                displayProcess("Fetching exports...");
-            };
-      break;
-      case "count exports":
-         sendResponse({status: "counting"});
-         userCount = message.userCount;
-         console.log(`Received count request from export page\nUser count is ${userCount}\nDeleting duplicates and counting`);
-         dedupAndCount();
-      break;
+         break;
+         case "count exports":
+            sendResponse({status: "counting"});
+            userCount = message.userCount;
+            console.log(`Received count request from export page\nUser count is ${userCount}\nDeleting duplicates and counting`);
+            dedupAndCount();
+         break;
       };
-   }
-);
+   };
+});
 //Listen for URL changes on the tabs (Errors)
 chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
    if(running){
