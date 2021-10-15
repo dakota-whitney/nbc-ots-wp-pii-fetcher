@@ -211,8 +211,8 @@ chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
             console.log(`An error occured while downloading\nReloading export page`);
             displayProcess("An error occured while fetching. Re-downloading...");
             setTimeout(() => {chrome.tabs.remove(siteId,function(){openExportPage();});},1000);
-         }else if(changeInfo.url.includes("inbcu.com/login/")){
-            displayProcess("You are not logged into NBCU SSO. Please delete your exports, login on the new tab tab, and fetch exports again");
+         }else if(changeInfo.url.includes("inbcu.com/login/") || changeInfo.url.includes("/wp-login.php?")){
+            displayProcess("You are not logged into SSO. Please delete your exports, login on the new tab tab, and fetch exports again");
             running = false;
             launcherPort.disconnect;
          };
