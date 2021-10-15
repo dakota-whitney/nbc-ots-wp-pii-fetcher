@@ -148,7 +148,6 @@ chrome.browserAction.onClicked.addListener(function(tab){
             if(response.request === "initialize"){
                console.log("Launcher page rendered display\nInitializing exports");
                initializeExports();
-               //setTimeout(() => {launcherPort.postMessage({command: "open"})},1000);
             };
          });
       };
