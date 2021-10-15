@@ -67,9 +67,11 @@ extensionPort.onMessage.addListener(function(message){
             console.log(`Too many retries on ${incomplete[incomplete.length - 1]}. Skipping and flagging as incomplete\nCurrent incompleted sites: ${incomplete.join("\n")}`);
         break;
         case "display":
+            currentSite = sites[siteIndex - 1];
             if(message.currentProcess){
                 if(/error|limit|SSO|^No export/.test(message.currentProcess)){
                     liveDisplay.setAttribute("style","color:red;font-style:italic;opacity:80%;");
+                    currentSite.removeAttribute("style");
                 }else{
                     liveDisplay.setAttribute("style","color:black;font-style:italic;opacity:80%;");
                 };
