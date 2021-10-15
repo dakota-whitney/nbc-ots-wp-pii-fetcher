@@ -68,7 +68,7 @@ extensionPort.onMessage.addListener(function(message){
         break;
         case "display":
             if(message.currentProcess){
-                if(message.currentProcess.includes("error") || message.currentProcess.includes("limit") || message.currentProcess.includes("SSO")){
+                if(/error|limit|SSO|^No export/.test(message.currentProcess)){
                     liveDisplay.setAttribute("style","color:red;font-style:italic;opacity:80%;");
                 }else{
                     liveDisplay.setAttribute("style","color:black;font-style:italic;opacity:80%;");

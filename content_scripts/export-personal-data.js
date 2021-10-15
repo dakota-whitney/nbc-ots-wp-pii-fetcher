@@ -14,7 +14,7 @@ function downloadExports(){
             link.click();
             if(i === linkList.length - 1){
                 setTimeout(() => {
-                    chrome.runtime.sendMessage({request: "count exports",userCount: linkList.length},function(response){
+                    chrome.runtime.sendMessage({request: "count exports"},function(response){
                         console.log(`Background page status: ${response.status}`);
                     });
                 },10000);
@@ -24,7 +24,7 @@ function downloadExports(){
 };
 function requestDownload(){
     if(linkList.length > 0){
-        chrome.runtime.sendMessage({request: "download"},function(response){
+        chrome.runtime.sendMessage({request: "download",userCount: linkList.length},function(response){
             if(response.command === "download"){
                 stageAndDownload();
             };

@@ -188,13 +188,13 @@ chrome.runtime.onMessage.addListener(
                displayProcess("No export links detected on current export page");
             break;
             case "download":
+               userCount = message.userCount;
                console.log("Export page has fully loaded\nReceived download request from export page");
-               sendResponse({command: "download"})
-               displayProcess("Fetching exports...");
+               displayProcess(`${userCount} users detected. Fetching exports...`);
+               sendResponse({command: "download"});
          break;
          case "count exports":
             sendResponse({status: "counting"});
-            userCount = message.userCount;
             console.log(`Received count request from export page\nUser count is ${userCount}\nDeleting duplicates and counting`);
             dedupAndCount();
          break;
