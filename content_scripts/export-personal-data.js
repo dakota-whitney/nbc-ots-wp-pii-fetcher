@@ -1,7 +1,7 @@
 //Declare global variables/functions
-let linkList = document.querySelectorAll('span.export-personal-data-idle > button');
+let exportLinks = [];
 function stageAndDownload(){
-    linkList.forEach((link,i) => {
+    exportLinks.forEach((link,i) => {
         setTimeout(() => {
             link.click();
         },i * 2000);
@@ -9,10 +9,10 @@ function stageAndDownload(){
     setTimeout(() => {downloadExports();},5000);
 };
 function downloadExports(){
-    linkList.forEach((link,i) => {
+    exportLinks.forEach((link,i) => {
         setTimeout(() => {
             link.click();
-            if(i === linkList.length - 1){
+            if(i === exportLinks.length - 1){
                 setTimeout(() => {
                     chrome.runtime.sendMessage({request: "count exports"},function(response){
                         console.log(`Background page status: ${response.status}`);
@@ -23,14 +23,16 @@ function downloadExports(){
     });
 };
 function requestDownload(){
-    if(linkList.length > 0){
-        chrome.runtime.sendMessage({request: "download",userCount: linkList.length},function(response){
+    let users = Array.from(document.querySelectorAll("td.email.column-email.has-row-actions.column-primary > a")).map(user => user.innerText);
+    exportLinks = document.querySelectorAll('span.export-personal-data-idle > button.export-personal-data-handle');
+    if(users.length > 0){
+        chrome.runtime.sendMessage({request: "download",users: users},function(response){
             if(response.command === "download"){
                 stageAndDownload();
             };
         });
     }else{
-        chrome.runtime.sendMessage({request: "no downloads"},function(response){
+        chrome.runtime.sendMessage({request: "display no exports"},function(response){
             console.log(`Background status: ${response.status}`);
         });
     };

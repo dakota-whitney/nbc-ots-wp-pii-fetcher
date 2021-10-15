@@ -55,25 +55,13 @@ function dedupAndCount(){
       };
    });
 };
-function deleteUnconfirmed(){
-   chrome.downloads.search({query: ["Unconfirmed",".crdownload"],orderBy: ["-startTime"]},function(unconfirmed){
-      console.log(`Found ${unconfirmed.length} unconfirmed downloads to delete`)
-      unconfirmed.forEach((file) => {
-         chrome.downloads.removeFile(file.id,function(){
-            chrome.downloads.erase({id: file.id},function(){
-               console.log(`Unconfirmed download ${file.id} deleted`);
-            });
-         });
-      });
-   });
-};
 function countExports(){
    chrome.downloads.search({query: ["wp-personal-data-file"],orderBy: ["-startTime"]},(downloads) => {
       //Capture export count
       exportCount = downloads.length;
       console.log(`Found ${exportCount} unique exports`);
       //Failed run
-      if(exportCount < userCount){
+      if(exportCount < users.length){
          displayCount(false);
          deleteUnconfirmed();
          //If under retry limit
@@ -98,6 +86,18 @@ function countExports(){
          console.log(`Exports retrieved. Resetting export count`);
          setTimeout(() => {console.log("Resetting download count");resetCount();},1000);
       };
+   });
+};
+function deleteUnconfirmed(){
+   chrome.downloads.search({query: ["Unconfirmed",".crdownload"],orderBy: ["-startTime"]},function(unconfirmed){
+      console.log(`Found ${unconfirmed.length} unconfirmed downloads to delete`)
+      unconfirmed.forEach((file) => {
+         chrome.downloads.removeFile(file.id,function(){
+            chrome.downloads.erase({id: file.id},function(){
+               console.log(`Unconfirmed download ${file.id} deleted`);
+            });
+         });
+      });
    });
 };
 function resetCount(){
@@ -132,11 +132,11 @@ let launcherId = 0;
 let running = false;
 let siteId = 0;
 let exportUrl = "";
-let userCount = 0;
+let users = [];
 let exportCount = 0;
 let retries = 0;
 chrome.browserAction.onClicked.addListener(function(tab){
-   if(tab.url.includes("/wp-admin/")){
+   if(/wp-admin\/my-sites\.php|wp-admin\/network\/sites\.php/.test(tab.url)){
       running = window.confirm(`Please confirm the following before fetching exports:\n\n- You are logged into ${tab.url.includes("microsites") ? `SSO on all Microsites` : `NBCU SSO`} in your current browser session\n\n- You've deleted any existing exports from your Downloads folder\n\n- You've allowed your browser to download multiple files on all ${tab.url.includes("microsites") ? `Microsites` : `Sites`}`);
       if(running){
          chrome.windows.getCurrent(function(window){
@@ -182,20 +182,20 @@ chrome.runtime.onMessage.addListener(
    function(message,sender,sendResponse){
       if(running){
          switch(message.request){
-            case "no downloads":
+            case "display no exports":
                console.log(`No export links detected on current export page`);
-               sendResponse({status: "displaying no downloads"});
-               displayProcess("No export links detected on current export page");
+               sendResponse({status: "displaying no exports"});
+               displayProcess("No data requests detected on current export page");
             break;
             case "download":
-               userCount = message.userCount;
+               users = message.users;
                console.log("Export page has fully loaded\nReceived download request from export page");
-               displayProcess(`${userCount} users detected. Fetching exports...`);
+               displayProcess(`${users.length} users detected. Fetching exports...`);
                sendResponse({command: "download"});
          break;
          case "count exports":
             sendResponse({status: "counting"});
-            console.log(`Received count request from export page\nUser count is ${userCount}\nDeleting duplicates and counting`);
+            console.log(`Received count request from export page\nUser count is ${users.length}\nDeleting duplicates and counting`);
             dedupAndCount();
          break;
       };
@@ -218,7 +218,7 @@ chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
          };
       };
       if(tabId === launcherId && changeInfo.status === "loading"){
-         console.log("Launcher reloaded. Disconnecting from launcher port");
+         console.log(`Launcher reloaded. Disconnecting from launcher port`);
          running = false;
          launcherPort.disconnect;
       };

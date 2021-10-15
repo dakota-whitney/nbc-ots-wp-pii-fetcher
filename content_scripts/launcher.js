@@ -1,7 +1,7 @@
 //Declare global varibales/functions
 let microsites = window.location.href.includes("microsites") ? true : false;
 console.log(`${microsites ? "Microsites launcher successfully injected" : "Primary launcher successfully injected"}`)
-let sites = microsites ? Array.from(document.querySelectorAll("#the-list > tr > td > strong > a")).filter(microsite => {return !/microsites|ranger|cazatormentas/.test(microsite.innerText)}) : document.querySelectorAll('p.my-sites-actions > a:nth-child(2)');
+let sites = microsites ? Array.from(document.querySelectorAll("#the-list > tr > td > strong > a")).filter(microsite => !/microsites|ranger|cazatormentas/.test(microsite.innerText)) : document.querySelectorAll('p.my-sites-actions > a:nth-child(2)');
 let siteIndex = 0;
 let incomplete = [];
 let liveDisplay = "";
