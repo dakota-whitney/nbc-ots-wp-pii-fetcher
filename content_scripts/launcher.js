@@ -30,11 +30,11 @@ extensionPort.onMessage.addListener(function(message){
     switch(message.command){
         case "open":
             currentSite = sites[siteIndex];
-            //If we're still working on sites
+            //Still in sites array
             if(siteIndex < sites.length){
                 console.log(`Current site: ${microsites ? currentSite.innerText : currentSite.href.split("/")[2]}\nsiteIndex: ${siteIndex}`);
                 currentSite.setAttribute("style","border:solid;border-color:yellow;");
-                //Assume success on last site if not highlighted red
+                //Mark site as successful on last site if not highlighted red
                 if(siteIndex > 0 && sites[siteIndex - 1].getAttribute("style") !== "border:solid;border-color:red;"){
                     sites[siteIndex - 1].setAttribute("style","border:solid;border-color:blue;");
                 };
@@ -68,7 +68,7 @@ extensionPort.onMessage.addListener(function(message){
         break;
         case "display":
             if(message.currentProcess){
-                if(/error|limit|SSO|^No/.test(message.currentProcess)){
+                if(/error|limit|^No/.test(message.currentProcess)){
                     liveDisplay.setAttribute("style","color:red;font-style:italic;opacity:80%;");
                 }else{
                     liveDisplay.setAttribute("style","color:black;font-style:italic;opacity:80%;");

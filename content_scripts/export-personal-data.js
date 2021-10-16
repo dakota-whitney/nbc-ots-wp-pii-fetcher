@@ -29,6 +29,8 @@ function requestDownload(){
         chrome.runtime.sendMessage({request: "download",users: users},function(response){
             if(response.command === "download"){
                 stageAndDownload();
+            }else if(response.command === "retry"){
+                downloadExports();
             };
         });
     }else{
