@@ -2,7 +2,7 @@
 Chrome browser extension developed for the purpose of downloading NBC OTS personal data export files from Wordpress to check for potential Personally Identifying Information (PII).
 
 # How It Works
-- The manifest.json file is configured to inject launcher.js into 2 NBC OTS Wordpress Admin pages when loaded in the browser:
+- The manifest.json file is configured to inject launcher.js into 2 NBC OTS Wordpress Admin pages when loaded in the browser:  
   https://ots.nbcwpshield.com/wp-admin/my-sites.php  
   https://vip-microsites.nbcwpshield.com/wp-admin/network/sites.php
 
