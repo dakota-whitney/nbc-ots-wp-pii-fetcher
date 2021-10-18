@@ -3,7 +3,7 @@ Chrome browser extension developed for the purpose of downloading NBC OTS person
 
 # How It Works
 - The manifest.json file is configured to inject launcher.js into 2 NBC OTS Wordpress Admin pages when loaded in the browser:
-  https://ots.nbcwpshield.com/wp-admin/my-sites.php
+  https://ots.nbcwpshield.com/wp-admin/my-sites.php  
   https://vip-microsites.nbcwpshield.com/wp-admin/network/sites.php
 
 - When the extension button is clicked, it triggers launcher.js to render a temporary display on the top of the Admin page, scan the page for each Site's wp-admin URL, add the export-personal-data.php suffix to the URL, and sends the new URL to background.js so it can open a new tab with the new URL
