@@ -79,6 +79,7 @@ function countUnique(){
       }else{
          //Successful run
          displayCount(true);
+         displayProcess("Exports retrieved");
          deleteUnconfirmed();
          console.log(`Exports retrieved. Resetting export count`);
          setTimeout(() => {console.log("Resetting download count");resetAndClose();},1000);

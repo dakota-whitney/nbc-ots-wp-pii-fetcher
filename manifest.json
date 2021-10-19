@@ -1,34 +1,34 @@
 {
-    "manifest_version": 2,
-    "name": "NBC OTS PII Fetcher",
-    "version": "1.0",
-    "description": "Launches all NBC/Telemundo personal data export pages, clicks all export data links, and re-runs downloads based on download count",
-    "permissions": ["downloads","tabs"],
-    "browser_action": {
-        "default_title": "NBC OTS PII Fetcher",
-        "browser_style": true,
-        "default_icon": "./dl-icon.png"
+  "manifest_version": 2,
+  "name": "NBC OTS PII Fetcher",
+  "version": "1.0",
+  "description": "Launches all NBC/Telemundo personal data export pages, clicks all export data links, and re-runs downloads based on download count",
+  "permissions": ["downloads","tabs"],
+  "browser_action": {
+      "default_title": "NBC OTS PII Fetcher",
+      "browser_style": true,
+      "default_icon": "./dl-icon.png"
+    },
+    "background": {
+      "scripts": ["background.js"],
+      "persistent": false
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://*/wp-admin/my-sites.php"],
+        "js": ["./content_scripts/launcher.js"]
       },
-      "background": {
-        "scripts": ["background.js"],
-        "persistent": false
+      {
+        "matches": ["https://*/wp-admin/network/sites.php"],
+        "js": ["./content_scripts/launcher.js"]
       },
-      "content_scripts": [
-        {
-          "matches": ["https://*/wp-admin/my-sites.php"],
-          "js": ["./content_scripts/launcher.js"]
-        },
-        {
-          "matches": ["https://*/wp-admin/network/sites.php"],
-          "js": ["./content_scripts/launcher.js"]
-        },
-        {
-          "matches": ["https://*/wp-admin/export-personal-data.php"],
-          "js": ["./content_scripts/export-personal-data.js"]
-        },
-        {
-          "matches": ["https://*/*/wp-admin/export-personal-data.php"],
-          "js": ["./content_scripts/export-personal-data.js"]
-        }
-      ]
+      {
+        "matches": ["https://*/wp-admin/export-personal-data.php"],
+        "js": ["./content_scripts/export-personal-data.js"]
+      },
+      {
+        "matches": ["https://*/*/wp-admin/export-personal-data.php"],
+        "js": ["./content_scripts/export-personal-data.js"]
+      }
+    ]
 }

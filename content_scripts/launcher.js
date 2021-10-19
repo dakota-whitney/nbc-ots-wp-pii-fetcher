@@ -70,6 +70,8 @@ extensionPort.onMessage.addListener(function(message){
             if(message.currentProcess){
                 if(/error|limit|^No/.test(message.currentProcess)){
                     liveDisplay.setAttribute("style","color:red;font-style:italic;opacity:80%;");
+                }else if(/retrieved/.test(message.currentProcess)){
+                    liveDisplay.setAttribute("style","color:blue;font-style:italic;opacity:80%;");
                 }else{
                     liveDisplay.setAttribute("style","color:black;font-style:italic;opacity:80%;");
                 };
@@ -79,8 +81,10 @@ extensionPort.onMessage.addListener(function(message){
                 console.log("Received display count message from extension");
                 if(message.wasSuccessful){
                     countDisplay.setAttribute("style","color:blue;");
+                    liveDisplay.setAttribute("style","color:blue;");
                 }else{
                     countDisplay.setAttribute("style","color:red;");
+                    liveDisplay.setAttribute("style","color:red;");
                 };
                 countDisplay.innerText = message.count;
             };
