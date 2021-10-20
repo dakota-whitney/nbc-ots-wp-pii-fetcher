@@ -8,7 +8,9 @@ function displayCount(successful){
 function initializeExports(){
    chrome.downloads.search({query: ["wp-personal-data-file"],orderBy: ["-startTime"]},function(existingExports){
       console.log(`Found ${existingExports.length} existing exports to delete`);
-      if(existingExports.length > 0){
+      if(existingExports.length > 1000){
+         displayProcess("Too many previous exports detected in download history. This can cause inaccurate export counts. Please delete any exports from your browser history and Downloads folder and try fetching again");
+      }else if(existingExports.length > 0){
          displayProcess("Initializing download manager...");
          existingExports.forEach((existingExport,i) => {
             chrome.downloads.removeFile(existingExport.id,function(){
@@ -70,7 +72,7 @@ function countUnique(){
                console.log(`Export page status: ${response.status}`);
             });
          }else{ //Retry limit reached
-            displayProcess("Retry limit reached. Marking incomplete");
+            displayProcess("Too many retries on current site. Marking incomplete");
             console.log(`Retry limit reached on tab ${siteId}. Updating launcher page`);
             launcherPort.postMessage({command: "incomplete"});
             //Clear downloads and reset count
@@ -144,7 +146,7 @@ chrome.browserAction.onClicked.addListener(function(tab){
          });
          launcherId = tab.id;
          console.log(`Launcher ID: ${launcherId}`)
-         chrome.tabs.sendMessage(launcherId,{command: "render display"},function(response){
+         chrome.tabs.sendMessage(launcherId,{command: "initialize"},function(response){
             if(response.request === "initialize"){
                console.log("Launcher page rendered display\nInitializing exports");
                initializeExports();
@@ -170,8 +172,9 @@ chrome.runtime.onConnect.addListener(function(port){
                window.alert(`Some sites didn't finish. Please note the incomplete sites below\n:${message.incomplete.join("\n")}`);
                console.log(`Some sites didn't finish. Please note the incomplete sites below:\n${message.incomplete.join("\n")}`);
             };
+            launcherPort.postMessage({command: "log users",users: users});
             running = false;
-            launcherPort.disconnect;
+            launcherPort.disconnect();
          break;
       };
    });
@@ -211,26 +214,26 @@ chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
       if(tabId === siteId && changeInfo.url){
          if(changeInfo.url.includes("/wp-content/")){
             errorCount++;
-            if(errorCount < 3){
-               console.log(`An error occured while downloading\nReloading export page`);
-               displayProcess("An error occured while fetching. Re-downloading...");
+            if(errorCount < 5){
+               console.log(`An error occured while fetching\nReloading export page`);
+               displayProcess("An error occured while fetching. Reloading export page...");
                setTimeout(() => {chrome.tabs.remove(siteId,function(){openExportPage();});},1000);
             }else{
+               displayProcess("Too many errors on current site. Marking incomplete")
                console.log(`Too many errors on tab ${siteId}. Flagging this site as incomplete`);
                launcherPort.postMessage({command: "incomplete"});
                //Clear downloads and reset count
                setTimeout(() => {console.log("Resetting download count");resetAndClose();},1000);
             };
          }else if(changeInfo.url.includes("inbcu.com/login/") || changeInfo.url.includes("/wp-login.php?")){
-            window.alert("You are not logged into SSO. Please delete any retrieved exports, log into SSO, and try fetching again");
-            running = false;
-            launcherPort.disconnect;
+            window.alert("You are not logged into SSO. Please log into SSO on the current export page to continue fetching");
+            console.log(`Alerted user to log into SSO and continue downloads`);
          };
       };
       if(tabId === launcherId && changeInfo.status === "loading"){
          console.log(`Launcher reloaded. Disconnecting from launcher port`);
          running = false;
-         launcherPort.disconnect;
+         launcherPort.disconnect();
       };
    };
 });

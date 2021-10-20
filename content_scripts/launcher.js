@@ -10,8 +10,8 @@ let extensionPort = chrome.runtime.connect({name: "extension-port"});
 console.log(`Connected to extension on ${extensionPort.name}`);
 chrome.runtime.onMessage.addListener(
     function(message,sender,sendResponse){
-        if(message.command === "render display"){
-            console.log("Received render display command from extension");
+        if(message.command === "initialize"){
+            console.log("Received initialize command from extension");
             if(microsites){
                 document.querySelector("#wpbody-content > div.wrap > ul").innerHTML = `<h3 style="font-style:italic;">PII Fetcher Live Display</h3><div style="width:200px;height:25px;background-color:white;font-size:12px;font-weight:bolder;border:1px solid black;"><span>Last export count: <span id="count-display"></span></span></div><p id="live-display"></p>`;
                 document.querySelector("#form-site-list > div.tablenav.top").setAttribute("style","display:none;");
@@ -47,9 +47,11 @@ extensionPort.onMessage.addListener(function(message){
                 };
                 extensionPort.postMessage({request: "complete",incomplete: incomplete});
                 liveDisplay.setAttribute("style","color:black;font-style:italic;opacity:80%;");
-                liveDisplay.innerText = `Fetching complete!`;
+                liveDisplay.innerText = `Fetching complete! Please see browser console log for users for this batch`;
             };
         break;
+        case "log users":
+            console.log(`See users for this batch below: ${message.users.join("\n")}`);
         case "incomplete":
             currentSite = sites[siteIndex - 1];
             if(!microsites){
@@ -68,7 +70,7 @@ extensionPort.onMessage.addListener(function(message){
         break;
         case "display":
             if(message.currentProcess){
-                if(/error|limit|^No/.test(message.currentProcess)){
+                if(/error|^No|^Too/.test(message.currentProcess)){
                     liveDisplay.setAttribute("style","color:red;font-style:italic;opacity:80%;");
                 }else if(/retrieved/.test(message.currentProcess)){
                     liveDisplay.setAttribute("style","color:blue;font-style:italic;opacity:80%;");
