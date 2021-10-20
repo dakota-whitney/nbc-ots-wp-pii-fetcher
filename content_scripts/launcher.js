@@ -55,13 +55,7 @@ extensionPort.onMessage.addListener(function(message){
         case "incomplete":
             currentSite = sites[siteIndex - 1];
             if(!microsites){
-                if(currentSite.href.includes("/telemundo/")){
-                    incomplete.push(currentSite.href.split("/")[2] + "/telemundo");
-                }else if(currentSite.href.includes("/qa/")){
-                    incomplete.push(currentSite.href.split("/")[2] + "/qa");
-                }else{
-                    incomplete.push(currentSite.href.split("/")[2]);
-                };
+                /\/telemundo\/|\/qa\//.test(currentSite.href) ? incomplete.push(exportUrl.split("/")[2] + "/" + exportUrl.split("/")[3]) : incomplete.push(exportUrl.split("/")[2]);
             }else{
                 incomplete.push(currentSite.innerText);
             };

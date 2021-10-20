@@ -72,7 +72,7 @@ function countUnique(){
                console.log(`Export page status: ${response.status}`);
             });
          }else{ //Retry limit reached
-            displayProcess("Too many retries on current site. Marking incomplete");
+            displayProcess(`Too many retries on ${/\/telemundo\/|\/qa\//.test(exportUrl) ? exportUrl.split("/")[2] + "/" + `${exportUrl.split("/")[3]}` : `${exportUrl.split("/")[2]}`}. Marking incomplete`);
             console.log(`Retry limit reached on tab ${siteId}. Updating launcher page`);
             launcherPort.postMessage({command: "incomplete"});
             //Clear downloads and reset count
@@ -184,9 +184,9 @@ chrome.runtime.onMessage.addListener(
       if(running){
          switch(message.request){
             case "display no exports":
-               console.log(`No export links detected on current export page`);
+               console.log(`No export links detected on site ${exportUrl.split("/")[2]}`);
                sendResponse({status: "displaying no exports"});
-               displayProcess("No data requests detected on current export page");
+               displayProcess(`No data requests detected on site ${/\/telemundo\/|\/qa\//.test(exportUrl) ? exportUrl.split("/")[2] + "/" + `${exportUrl.split("/")[3]}` : `${exportUrl.split("/")[2]}`}`);
             break;
             case "download":
                users = message.users;
@@ -219,15 +219,15 @@ chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tabInfo){
                displayProcess("An error occured while fetching. Reloading export page...");
                setTimeout(() => {chrome.tabs.remove(siteId,function(){openExportPage();});},1000);
             }else{
-               displayProcess("Too many errors on current site. Marking incomplete")
+               displayProcess(`Too many errors on ${/\/telemundo\/|\/qa\//.test(exportUrl) ? exportUrl.split("/")[2] + "/" + `${exportUrl.split("/")[3]}` : `${exportUrl.split("/")[2]}`}. Marking incomplete`)
                console.log(`Too many errors on tab ${siteId}. Flagging this site as incomplete`);
                launcherPort.postMessage({command: "incomplete"});
                //Clear downloads and reset count
                setTimeout(() => {console.log("Resetting download count");resetAndClose();},1000);
             };
          }else if(changeInfo.url.includes("inbcu.com/login/") || changeInfo.url.includes("/wp-login.php?")){
-            window.alert("You are not logged into SSO. Please log into SSO on the current export page to continue fetching");
-            console.log(`Alerted user to log into SSO and continue downloads`);
+            console.log(`Alerting user to log into SSO and continue downloads`);
+            window.alert(`You are not logged into SSO on site ${/\/telemundo\/|\/qa\//.test(exportUrl) ? exportUrl.split("/")[2] + "/" + `${exportUrl.split("/")[3]}` : `${exportUrl.split("/")[2]}`}. Please log into SSO to continue fetching`);
          };
       };
       if(tabId === launcherId && changeInfo.status === "loading"){
