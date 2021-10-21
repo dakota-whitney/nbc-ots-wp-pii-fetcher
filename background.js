@@ -155,15 +155,17 @@ chrome.browserAction.onClicked.addListener(function(tab){
                   initializeExports();
                case "new tab":
                   //Close any empty tabs created when tabs.connect was called
-                  chrome.tabs.query({title: "New Tab",windowId: launcherWindow},function(emptyTabs){
-                     if(emptyTabs.length > 0){
-                        emptyTabs.forEach(tab => {
-                           chrome.tabs.remove(tab.id,function(){
-                              console.log(`Removed blank tab ${tab.id}`);
+                  if(message.firstSite){
+                     chrome.tabs.query({title: "New Tab",windowId: launcherWindow},function(emptyTabs){
+                        if(emptyTabs.length > 0){
+                           emptyTabs.forEach(tab => {
+                              chrome.tabs.remove(tab.id,function(){
+                                 console.log(`Removed blank tab ${tab.id}`);
+                              })
                            })
-                        })
-                     };
-                  });
+                        };
+                     });
+                  };
                   console.log("Received new tab request from launcher");
                   exportUrl = message.exportUrl;
                   displayProcess("Opening next site...");

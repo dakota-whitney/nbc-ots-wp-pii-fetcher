@@ -33,7 +33,7 @@ chrome.runtime.onConnect.addListener(function(extensionPort){
                     if(siteIndex > 0 && sites[siteIndex - 1].getAttribute("style") !== "border:solid;border-color:red;"){
                         sites[siteIndex - 1].setAttribute("style","border:solid;border-color:blue;");
                     };
-                    extensionPort.postMessage({request: "new tab",exportUrl: microsites ? `https://${currentSite.innerText}/wp-admin/export-personal-data.php` : `${currentSite.href}export-personal-data.php`});
+                    siteIndex === 0 ? extensionPort.postMessage({request: "new tab",firstSite: true,exportUrl: microsites ? `https://${currentSite.innerText}/wp-admin/export-personal-data.php` : `${currentSite.href}export-personal-data.php`}) : extensionPort.postMessage({request: "new tab",exportUrl: microsites ? `https://${currentSite.innerText}/wp-admin/export-personal-data.php` : `${currentSite.href}export-personal-data.php`});
                     siteIndex++;
                 }else{ //End of sites array
                     if(incomplete.length > 0){
