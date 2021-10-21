@@ -36,7 +36,9 @@ chrome.runtime.onConnect.addListener(function(extensionPort){
                     extensionPort.postMessage({request: "new tab",exportUrl: microsites ? `https://${currentSite.innerText}/wp-admin/export-personal-data.php` : `${currentSite.href}export-personal-data.php`});
                     siteIndex++;
                 }else{ //End of sites array
-                    console.log(`Export complete. Please note the incomplete sites below:\n${incomplete.join("\n")}`);
+                    if(incomplete.length > 0){
+                        console.log(`Export complete. Please note the incomplete sites below:\n${incomplete.join("\n")}`);
+                    };
                     if(sites[siteIndex - 1].getAttribute("style") !== "border:solid;border-color:red;"){
                         sites[siteIndex - 1].setAttribute("style","border:solid;border-color:blue;");
                     };
@@ -46,7 +48,7 @@ chrome.runtime.onConnect.addListener(function(extensionPort){
                 };
             break;
             case "log users":
-                console.log(`See users for this batch below: ${message.users.join("\n")}`);
+                console.log(`See users for this batch below:\n${message.users.join("\n")}`);
             case "incomplete":
                 currentSite = sites[siteIndex - 1];
                 if(!microsites){
