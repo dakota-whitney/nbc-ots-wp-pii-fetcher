@@ -127,7 +127,7 @@ function deleteUnconfirmed(){
    });
 };
 //Initialize global variables
-let launcherPort = 0;
+let launcherPort = "";
 let launcherWindow = 0;
 let launcherId = 0;
 let running = false;
@@ -145,39 +145,44 @@ chrome.browserAction.onClicked.addListener(function(tab){
             launcherWindow = window.id;
          });
          launcherId = tab.id;
-         console.log(`Launcher ID: ${launcherId}`)
-         chrome.tabs.sendMessage(launcherId,{command: "initialize"},function(response){
-            if(response.request === "initialize"){
-               console.log("Launcher page rendered display\nInitializing exports");
-               initializeExports();
+         console.log(`Launcher ID: ${launcherId}`);
+         launcherPort = chrome.tabs.connect(launcherId,{name: "launcher-port"});
+         launcherPort.postMessage({command: "initialize"});
+         launcherPort.onMessage.addListener(function(message){
+            switch(message.request){
+               case "initialize":
+                  console.log("Launcher page rendered display\nInitializing exports");
+                  initializeExports();
+               case "new tab":
+                  //Close any empty tabs created when tabs.connect was called
+                  chrome.tabs.query({title: "New Tab",windowId: launcherWindow},function(emptyTabs){
+                     if(emptyTabs.length > 0){
+                        emptyTabs.forEach(tab => {
+                           chrome.tabs.remove(tab.id,function(){
+                              console.log(`Removed blank tab ${tab.id}`);
+                           })
+                        })
+                     };
+                  });
+                  console.log("Received new tab request from launcher");
+                  exportUrl = message.exportUrl;
+                  displayProcess("Opening next site...");
+                  openExportPage();
+               break;
+               case "complete":
+                  console.log("Received complete request from launcher");
+                  if(message.incomplete.length > 0){
+                     window.alert(`Some sites didn't finish. Please note the incomplete sites below\n:${message.incomplete.join("\n")}`);
+                     console.log(`Some sites didn't finish. Please note the incomplete sites below:\n${message.incomplete.join("\n")}`);
+                  };
+                  launcherPort.postMessage({command: "log users",users: users});
+                  running = false;
+                  launcherPort.disconnect();
+               break;
             };
          });
       };
    };
-});
-chrome.runtime.onConnect.addListener(function(port){
-   launcherPort = port;
-   console.log(`Connected to launcher on ${launcherPort.name}`);
-   launcherPort.onMessage.addListener(function(message){
-      switch(message.request){
-         case "new tab":
-            console.log("Received new tab request from launcher");
-            exportUrl = message.exportUrl;
-            displayProcess("Opening next site...");
-            openExportPage();
-         break;
-         case "complete":
-            console.log("Received complete request from launcher");
-            if(message.incomplete.length > 0){
-               window.alert(`Some sites didn't finish. Please note the incomplete sites below\n:${message.incomplete.join("\n")}`);
-               console.log(`Some sites didn't finish. Please note the incomplete sites below:\n${message.incomplete.join("\n")}`);
-            };
-            launcherPort.postMessage({command: "log users",users: users});
-            running = false;
-            launcherPort.disconnect();
-         break;
-      };
-   });
 });
 chrome.runtime.onMessage.addListener(
    function(message,sender,sendResponse){
