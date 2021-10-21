@@ -29,11 +29,12 @@ chrome.runtime.onConnect.addListener(function(extensionPort){
                 if(siteIndex < sites.length){
                     console.log(`Current site: ${microsites ? currentSite.innerText : currentSite.href.split("/")[2]}\nsiteIndex: ${siteIndex}`);
                     currentSite.setAttribute("style","border:solid;border-color:yellow;");
+                    //If on first site, inform extension. Else just send appropriate export URL
+                    siteIndex === 0 ? extensionPort.postMessage({request: "new tab",firstSite: true,exportUrl: microsites ? `https://${currentSite.innerText}/wp-admin/export-personal-data.php` : `${currentSite.href}export-personal-data.php`}) : extensionPort.postMessage({request: "new tab",exportUrl: microsites ? `https://${currentSite.innerText}/wp-admin/export-personal-data.php` : `${currentSite.href}export-personal-data.php`});
                     //Mark site as successful on last site if not highlighted red
                     if(siteIndex > 0 && sites[siteIndex - 1].getAttribute("style") !== "border:solid;border-color:red;"){
                         sites[siteIndex - 1].setAttribute("style","border:solid;border-color:blue;");
                     };
-                    siteIndex === 0 ? extensionPort.postMessage({request: "new tab",firstSite: true,exportUrl: microsites ? `https://${currentSite.innerText}/wp-admin/export-personal-data.php` : `${currentSite.href}export-personal-data.php`}) : extensionPort.postMessage({request: "new tab",exportUrl: microsites ? `https://${currentSite.innerText}/wp-admin/export-personal-data.php` : `${currentSite.href}export-personal-data.php`});
                     siteIndex++;
                 }else{ //End of sites array
                     if(incomplete.length > 0){
